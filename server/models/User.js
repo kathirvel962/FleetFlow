@@ -27,6 +27,12 @@ const userSchema = new mongoose.Schema(
             default: "DRIVER"
         },
 
+        phone: {
+            type: String,
+            trim: true,
+            default: ""
+        },
+
         isActive: {
             type: Boolean,
             default: true
