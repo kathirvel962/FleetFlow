@@ -49,27 +49,12 @@ const seedDatabase = async () => {
             isActive: true
         });
 
-        // 3. DRIVER 1
-        const driverUser1 = await User.create({
-            name: "David Driver",
-            email: "driver1@fleetflow.com",
-            password: hashedPassword,
-            role: "DRIVER",
-            phone: "+1-555-0102",
-            isActive: true
-        });
 
-        // 4. DRIVER 2
-        const driverUser2 = await User.create({
-            name: "Danielle Driver",
-            email: "driver2@fleetflow.com",
-            password: hashedPassword,
-            role: "DRIVER",
-            phone: "+1-555-0103",
-            isActive: true
-        });
 
-        console.log("Seeding Vehicles...");
+
+
+
+
         // Vehicle 1
         const vehicle1 = await Vehicle.create({
             vehicleNumber: "VAN-101",
