@@ -1,6 +1,6 @@
-// Shared reusable UI components for FleetFlow
-
-import { Loader2, AlertCircle, RefreshCw, Package, Inbox } from "lucide-react";
+import { useEffect } from "react";
+import { createPortal } from "react-dom";
+import { Loader2, AlertCircle, RefreshCw, Package, Inbox, X } from "lucide-react";
 
 // ─── Loading Skeleton ──────────────────────────────────────────────────────────
 export function SkeletonCard() {
@@ -254,35 +254,84 @@ export function Select({ label, error, children, className = "", ...props }) {
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
 export function Modal({ open, onClose, title, children, maxWidth = "max-w-lg" }) {
+    useEffect(() => {
+        if (!open) return;
+        const handleKeyDown = (e) => {
+            if (e.key === "Escape") onClose?.();
+        };
+        const prevOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            document.body.style.overflow = prevOverflow;
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [open, onClose]);
+
     if (!open) return null;
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-            <div className={`relative bg-white rounded-2xl shadow-2xl w-full ${maxWidth} animate-fade-in max-h-[90vh] flex flex-col`}>
+
+    return createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+            <div
+                className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity animate-fade-in"
+                onClick={onClose}
+                aria-hidden="true"
+            />
+            <div
+                className={`relative bg-white rounded-2xl shadow-2xl w-full ${maxWidth} animate-fade-in max-h-[90vh] flex flex-col z-10 my-auto`}
+                role="dialog"
+                aria-modal="true"
+            >
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 shrink-0">
                     <h2 className="text-base font-semibold text-slate-800">{title}</h2>
                     <button
+                        type="button"
                         onClick={onClose}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                        aria-label="Close modal"
                     >
-                        <Package className="w-4 h-4 rotate-45" />
+                        <X className="w-5 h-5" />
                     </button>
                 </div>
                 <div className="overflow-y-auto flex-1 px-6 py-4">
                     {children}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
 
 // ─── Confirm Dialog ───────────────────────────────────────────────────────────
 export function ConfirmDialog({ open, onClose, onConfirm, title, message, confirmLabel = "Confirm", variant = "danger" }) {
+    useEffect(() => {
+        if (!open) return;
+        const handleKeyDown = (e) => {
+            if (e.key === "Escape") onClose?.();
+        };
+        const prevOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            document.body.style.overflow = prevOverflow;
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [open, onClose]);
+
     if (!open) return null;
-    return (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm animate-fade-in p-6">
+
+    return createPortal(
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 overflow-y-auto">
+            <div
+                className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity animate-fade-in"
+                onClick={onClose}
+                aria-hidden="true"
+            />
+            <div
+                className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm animate-fade-in p-6 z-10 my-auto"
+                role="alertdialog"
+                aria-modal="true"
+            >
                 <div className="flex items-start gap-4 mb-5">
                     <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center shrink-0">
                         <AlertCircle className="w-5 h-5 text-red-600" />
@@ -297,7 +346,8 @@ export function ConfirmDialog({ open, onClose, onConfirm, title, message, confir
                     <Button variant={variant} onClick={onConfirm}>{confirmLabel}</Button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
 

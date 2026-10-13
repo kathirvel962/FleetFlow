@@ -12,7 +12,7 @@ const VEHICLE_TYPES = ["TRUCK", "VAN", "CAR", "BIKE", "TRAILER", "OTHER"];
 const FUEL_TYPES = ["DIESEL", "PETROL", "ELECTRIC", "HYBRID", "CNG", "OTHER"];
 const VEHICLE_STATUSES = ["AVAILABLE", "ASSIGNED", "IN_TRANSIT", "MAINTENANCE", "INACTIVE"];
 
-function VehicleForm({ initial, onSubmit, loading }) {
+function VehicleForm({ initial, onSubmit, onClose, loading }) {
     const [form, setForm] = useState({
         vehicleNumber: initial?.vehicleNumber || "",
         registrationNumber: initial?.registrationNumber || "",
@@ -56,21 +56,35 @@ function VehicleForm({ initial, onSubmit, loading }) {
                 <Input label="Capacity (kg)" type="number" value={form.capacity} onChange={e => set("capacity", +e.target.value)} min={1} />
             </div>
             {initial && (
-                <Select label="Status" value={form.status} onChange={e => set("status", e.target.value)}>
-                    {VEHICLE_STATUSES.map(s => <option key={s}>{s}</option>)}
-                </Select>
+                <div>
+                    <Select label="Status" value={form.status} onChange={e => set("status", e.target.value)}>
+                        {VEHICLE_STATUSES.map(s => <option key={s}>{s}</option>)}
+                    </Select>
+                </div>
             )}
-            <div className="flex items-center gap-3">
-                <label className="text-sm font-medium text-slate-700">Active</label>
-                <button type="button" onClick={() => set("isActive", !form.isActive)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${form.isActive ? "bg-blue-600" : "bg-slate-300"}`}>
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.isActive ? "translate-x-6" : "translate-x-1"}`} />
-                </button>
-            </div>
-            <div className="flex justify-end pt-2">
-                <Button type="submit" loading={loading}>
-                    {initial ? "Update Vehicle" : "Add Vehicle"}
-                </Button>
+            <div className="flex items-center justify-between pt-4 border-t border-slate-100 mt-2">
+                <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-slate-700">Active</span>
+                    <button
+                        type="button"
+                        role="switch"
+                        aria-checked={form.isActive}
+                        onClick={() => set("isActive", !form.isActive)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${form.isActive ? "bg-blue-600" : "bg-slate-300"}`}
+                    >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-xs ${form.isActive ? "translate-x-6" : "translate-x-1"}`} />
+                    </button>
+                </div>
+                <div className="flex items-center gap-2">
+                    {onClose && (
+                        <Button type="button" variant="secondary" onClick={onClose}>
+                            Cancel
+                        </Button>
+                    )}
+                    <Button type="submit" loading={loading}>
+                        {initial ? "Update Vehicle" : "Add Vehicle"}
+                    </Button>
+                </div>
             </div>
         </form>
     );
@@ -254,6 +268,7 @@ function Vehicles() {
                 <VehicleForm
                     initial={modal.type === "edit" ? modal.vehicle : null}
                     onSubmit={modal.type === "edit" ? handleUpdate : handleCreate}
+                    onClose={() => setModal({ open: false })}
                     loading={submitting}
                 />
             </Modal>

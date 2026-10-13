@@ -12,9 +12,13 @@ import {
 
 const AVAILABILITY_STATUSES = ["AVAILABLE", "ON_TRIP", "OFF_DUTY", "SUSPENDED"];
 
-function DriverForm({ initial, onSubmit, loading, driverUsers, vehicles }) {
+function DriverForm({ initial, onSubmit, onClose, loading, driverUsers = [], vehicles = [] }) {
+    const [userMode, setUserMode] = useState(driverUsers && driverUsers.length > 0 && !initial ? "existing" : "new");
     const [form, setForm] = useState({
         userId: initial?.user?._id || initial?.user || "",
+        name: initial?.user?.name || "",
+        email: initial?.user?.email || "",
+        password: "",
         phone: initial?.phone || "",
         licenseNumber: initial?.licenseNumber || "",
         licenseExpiry: initial?.licenseExpiry ? initial.licenseExpiry.split("T")[0] : "",
@@ -31,7 +35,10 @@ function DriverForm({ initial, onSubmit, loading, driverUsers, vehicles }) {
     const handleSubmit = (e) => {
         e.preventDefault();
         const payload = {
-            userId: form.userId,
+            userId: (!initial && userMode === "existing") ? form.userId : (initial ? (form.userId || initial.user?._id) : undefined),
+            name: (!initial && userMode === "new") ? form.name : undefined,
+            email: (!initial && userMode === "new") ? form.email : undefined,
+            password: (!initial && userMode === "new" && form.password) ? form.password : undefined,
             phone: form.phone,
             licenseNumber: form.licenseNumber,
             licenseExpiry: form.licenseExpiry || undefined,
@@ -49,13 +56,69 @@ function DriverForm({ initial, onSubmit, loading, driverUsers, vehicles }) {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
-            {!initial && (
-                <Select label="Select User (DRIVER role) *" value={form.userId} onChange={e => set("userId", e.target.value)} required>
-                    <option value="">— Choose user —</option>
-                    {driverUsers.map(u => (
-                        <option key={u._id} value={u._id}>{u.name} ({u.email})</option>
-                    ))}
-                </Select>
+            {initial ? (
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <p className="text-xs text-slate-500">Linked User Account</p>
+                    <p className="text-sm font-semibold text-slate-800">{initial.user?.name || "Driver"} ({initial.user?.email || "No email"})</p>
+                </div>
+            ) : (
+                <div className="space-y-3">
+                    {driverUsers && driverUsers.length > 0 && (
+                        <div className="flex bg-slate-100 p-1 rounded-lg text-xs font-medium">
+                            <button
+                                type="button"
+                                onClick={() => { setUserMode("new"); set("userId", ""); }}
+                                className={`flex-1 py-1.5 rounded-md transition-all ${userMode === "new" ? "bg-white text-blue-600 shadow-xs font-semibold" : "text-slate-600 hover:text-slate-900"}`}
+                            >
+                                + New Driver Account
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setUserMode("existing")}
+                                className={`flex-1 py-1.5 rounded-md transition-all ${userMode === "existing" ? "bg-white text-blue-600 shadow-xs font-semibold" : "text-slate-600 hover:text-slate-900"}`}
+                            >
+                                Existing User ({driverUsers.length})
+                            </button>
+                        </div>
+                    )}
+
+                    {userMode === "existing" && driverUsers && driverUsers.length > 0 ? (
+                        <Select label="Select User (DRIVER role) *" value={form.userId} onChange={e => set("userId", e.target.value)} required>
+                            <option value="">— Choose user —</option>
+                            {driverUsers.map(u => (
+                                <option key={u._id} value={u._id}>{u.name} ({u.email})</option>
+                            ))}
+                        </Select>
+                    ) : (
+                        <div className="space-y-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                            <p className="text-xs font-semibold text-slate-700">Driver User Account Details</p>
+                            <div className="grid grid-cols-2 gap-3">
+                                <Input
+                                    label="Driver Name *"
+                                    value={form.name}
+                                    onChange={e => set("name", e.target.value)}
+                                    required
+                                    placeholder="e.g. Ramesh Kumar"
+                                />
+                                <Input
+                                    label="Email Address *"
+                                    type="email"
+                                    value={form.email}
+                                    onChange={e => set("email", e.target.value)}
+                                    required
+                                    placeholder="driver@fleetflow.com"
+                                />
+                            </div>
+                            <Input
+                                label="Password (optional, default: Driver@123)"
+                                type="password"
+                                value={form.password}
+                                onChange={e => set("password", e.target.value)}
+                                placeholder="Min 6 characters (default: Driver@123)"
+                            />
+                        </div>
+                    )}
+                </div>
             )}
             <div className="grid grid-cols-2 gap-3">
                 <Input label="License Number *" value={form.licenseNumber} onChange={e => set("licenseNumber", e.target.value)} required placeholder="DL-123456" />
@@ -84,7 +147,12 @@ function DriverForm({ initial, onSubmit, loading, driverUsers, vehicles }) {
                     </div>
                 </div>
             </div>
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2 pt-4 border-t border-slate-100 mt-2">
+                {onClose && (
+                    <Button type="button" variant="secondary" onClick={onClose}>
+                        Cancel
+                    </Button>
+                )}
                 <Button type="submit" loading={loading}>
                     {initial ? "Update Driver" : "Create Driver Profile"}
                 </Button>
@@ -278,6 +346,7 @@ function Drivers() {
                 <DriverForm
                     initial={modal.type === "edit" ? modal.driver : null}
                     onSubmit={modal.type === "edit" ? handleUpdate : handleCreate}
+                    onClose={() => setModal({ open: false })}
                     loading={submitting}
                     driverUsers={driverUsers}
                     vehicles={vehicles}

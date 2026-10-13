@@ -9,7 +9,7 @@ import {
 
 const ROLES = ["ADMIN", "DISPATCHER", "DRIVER"];
 
-function UserForm({ initial, onSubmit, loading }) {
+function UserForm({ initial, onSubmit, onClose, loading }) {
     const [form, setForm] = useState({
         name: initial?.name || "",
         email: initial?.email || "",
@@ -44,20 +44,29 @@ function UserForm({ initial, onSubmit, loading }) {
                 {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
             </Select>
             <Input label="Phone" value={form.phone} onChange={e => set("phone", e.target.value)} placeholder="+91 9999999999" />
-            <div className="flex items-center gap-3">
-                <label className="text-sm font-medium text-slate-700">Active</label>
-                <button
-                    type="button"
-                    onClick={() => set("isActive", !form.isActive)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${form.isActive ? "bg-blue-600" : "bg-slate-300"}`}
-                >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.isActive ? "translate-x-6" : "translate-x-1"}`} />
-                </button>
-            </div>
-            <div className="flex justify-end gap-2 pt-2">
-                <Button type="submit" loading={loading}>
-                    {initial ? "Update User" : "Create User"}
-                </Button>
+            <div className="flex items-center justify-between pt-4 border-t border-slate-100 mt-2">
+                <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-slate-700">Active</span>
+                    <button
+                        type="button"
+                        role="switch"
+                        aria-checked={form.isActive}
+                        onClick={() => set("isActive", !form.isActive)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${form.isActive ? "bg-blue-600" : "bg-slate-300"}`}
+                    >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-xs ${form.isActive ? "translate-x-6" : "translate-x-1"}`} />
+                    </button>
+                </div>
+                <div className="flex items-center gap-2">
+                    {onClose && (
+                        <Button type="button" variant="secondary" onClick={onClose}>
+                            Cancel
+                        </Button>
+                    )}
+                    <Button type="submit" loading={loading}>
+                        {initial ? "Update User" : "Create User"}
+                    </Button>
+                </div>
             </div>
         </form>
     );
@@ -267,6 +276,7 @@ function Users() {
                 <UserForm
                     initial={modal.type === "edit" ? modal.user : null}
                     onSubmit={modal.type === "edit" ? handleUpdate : handleCreate}
+                    onClose={() => setModal({ open: false })}
                     loading={submitting}
                 />
             </Modal>

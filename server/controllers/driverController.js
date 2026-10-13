@@ -1,6 +1,7 @@
 const Driver = require("../models/Driver");
 const User = require("../models/User");
 const Vehicle = require("../models/Vehicle");
+const bcrypt = require("bcryptjs");
 const { paginateQuery } = require("../utils/queryHelper");
 const { isValidObjectId } = require("../utils/validators");
 
@@ -98,8 +99,11 @@ const getDriverById = async (req, res, next) => {
 // @access  Private (ADMIN)
 const createDriver = async (req, res, next) => {
     try {
-        const {
+        let {
             userId,
+            name,
+            email,
+            password,
             phone,
             licenseNumber,
             licenseExpiry,
@@ -109,41 +113,85 @@ const createDriver = async (req, res, next) => {
             assignedVehicle
         } = req.body;
 
-        if (!userId || !licenseNumber) {
+        if (!licenseNumber || !licenseNumber.trim()) {
             return res.status(400).json({
                 success: false,
-                message: "User ID and license number are required"
+                message: "License number is required"
             });
         }
 
-        if (!isValidObjectId(userId)) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid user ID"
-            });
-        }
+        // Handle user association or new user creation
+        let resolvedUserId = userId;
 
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: "User not found"
-            });
-        }
+        if (!resolvedUserId) {
+            if (!name || !email) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Driver Name and Email (or selecting an existing user) are required"
+                });
+            }
 
-        if (user.role !== "DRIVER") {
-            return res.status(400).json({
-                success: false,
-                message: "User must have DRIVER role to create a driver profile"
-            });
-        }
+            const cleanEmail = email.trim().toLowerCase();
+            let existingUser = await User.findOne({ email: cleanEmail });
 
-        const existingDriver = await Driver.findOne({ user: userId });
-        if (existingDriver) {
-            return res.status(400).json({
-                success: false,
-                message: "Driver profile already exists for this user"
-            });
+            if (existingUser) {
+                if (existingUser.role !== "DRIVER") {
+                    return res.status(400).json({
+                        success: false,
+                        message: `User with email "${cleanEmail}" already exists with role "${existingUser.role}". Must have DRIVER role.`
+                    });
+                }
+                const existingDriver = await Driver.findOne({ user: existingUser._id });
+                if (existingDriver) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `A driver profile already exists for "${existingUser.name}" (${cleanEmail})`
+                    });
+                }
+                resolvedUserId = existingUser._id;
+            } else {
+                const defaultPassword = password && password.length >= 6 ? password : "Driver@123";
+                const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+                const newUser = await User.create({
+                    name: name.trim(),
+                    email: cleanEmail,
+                    password: hashedPassword,
+                    role: "DRIVER",
+                    phone: phone || "",
+                    isActive: true
+                });
+                resolvedUserId = newUser._id;
+            }
+        } else {
+            if (!isValidObjectId(resolvedUserId)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid user ID"
+                });
+            }
+
+            const user = await User.findById(resolvedUserId);
+            if (!user) {
+                return res.status(404).json({
+                    success: false,
+                    message: "User not found"
+                });
+            }
+
+            if (user.role !== "DRIVER") {
+                return res.status(400).json({
+                    success: false,
+                    message: "User must have DRIVER role to create a driver profile"
+                });
+            }
+
+            const existingDriver = await Driver.findOne({ user: resolvedUserId });
+            if (existingDriver) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Driver profile already exists for this user"
+                });
+            }
         }
 
         const existingLicense = await Driver.findOne({ licenseNumber: licenseNumber.toUpperCase().trim() });
@@ -173,8 +221,8 @@ const createDriver = async (req, res, next) => {
         }
 
         const driver = await Driver.create({
-            user: userId,
-            phone: phone || user.phone || "",
+            user: resolvedUserId,
+            phone: phone || "",
             licenseNumber: licenseNumber.toUpperCase().trim(),
             licenseExpiry: licenseExpiry || null,
             address: address || "",

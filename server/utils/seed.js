@@ -31,21 +31,21 @@ const seedDatabase = async () => {
         console.log("Seeding Users...");
         // 1. ADMIN
         const adminUser = await User.create({
-            name: "Alex Administrator",
-            email: "admin@fleetflow.com",
+            name: "Kathir Admin",
+            email: "kathiradmin@fleetflow.com",
             password: hashedPassword,
             role: "ADMIN",
-            phone: "+1-555-0100",
+            phone: "7034960896",
             isActive: true
         });
 
         // 2. DISPATCHER
         const dispatcherUser = await User.create({
-            name: "Diana Dispatcher",
-            email: "dispatcher@fleetflow.com",
+            name: "Kavi",
+            email: "kavidispatcher@fleetflow.com",
             password: hashedPassword,
             role: "DISPATCHER",
-            phone: "+1-555-0101",
+            phone: "9384759121",
             isActive: true
         });
 
@@ -56,6 +56,7 @@ const seedDatabase = async () => {
 
 
         // Vehicle 1
+        const defaultfuel = "DIESL";
         const vehicle1 = await Vehicle.create({
             vehicleNumber: "VAN-101",
             registrationNumber: "FL-VAN-2024-01",
@@ -98,7 +99,7 @@ const seedDatabase = async () => {
         const driverProfile1 = await Driver.create({
             user: driverUser1._id,
             phone: driverUser1.phone,
-            licenseNumber: "DL-NY-98765432",
+            licenseNumber: "TN-NY-98765432",
             licenseExpiry: new Date("2028-12-31"),
             address: "124 Logistics Way, Queens, NY",
             emergencyContact: {

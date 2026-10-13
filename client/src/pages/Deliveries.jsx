@@ -13,7 +13,7 @@ const DELIVERY_STATUSES = [
 ];
 const PRIORITIES = ["LOW", "MEDIUM", "HIGH", "URGENT"];
 
-function DeliveryForm({ initial, onSubmit, loading }) {
+function DeliveryForm({ initial, onSubmit, onClose, loading }) {
     const [form, setForm] = useState({
         customerName: initial?.customerName || "",
         customerPhone: initial?.customerPhone || "",
@@ -68,7 +68,12 @@ function DeliveryForm({ initial, onSubmit, loading }) {
                 </Select>
             )}
             <Input label="Notes" value={form.notes} onChange={e => set("notes", e.target.value)} placeholder="Special instructions…" />
-            <div className="flex justify-end pt-2">
+            <div className="flex justify-end gap-2 pt-4 border-t border-slate-100 mt-2">
+                {onClose && (
+                    <Button type="button" variant="secondary" onClick={onClose}>
+                        Cancel
+                    </Button>
+                )}
                 <Button type="submit" loading={loading}>
                     {initial ? "Update Delivery" : "Create Delivery"}
                 </Button>
@@ -332,6 +337,7 @@ function Deliveries() {
                 <DeliveryForm
                     initial={modal.type === "edit" ? modal.delivery : null}
                     onSubmit={modal.type === "edit" ? handleUpdate : handleCreate}
+                    onClose={() => setModal({ open: false })}
                     loading={submitting}
                 />
             </Modal>
