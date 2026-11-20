@@ -2,13 +2,15 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Users, Truck, Car, Package, Clock, CheckCircle, XCircle, AlertTriangle,
-    RefreshCw, TrendingUp, MapPin, Zap, Send
+    RefreshCw, TrendingUp, MapPin, Zap, Send, PackageCheck
 } from "lucide-react";
 import {
     PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend
 } from "recharts";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import { dashboardService } from "../services/dashboardService";
+import { deliveryService } from "../services/deliveryService";
 import {
     KpiCard, StatusBadge, PriorityBadge, PageHeader, Card, CardHeader,
     Table, SkeletonCard, ErrorState, EmptyState, formatDate, Button,
@@ -334,7 +336,9 @@ function DriverDashboard() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [updatingStatus, setUpdatingStatus] = useState(false);
     const navigate = useNavigate();
+    const toast = useToast();
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -350,6 +354,19 @@ function DriverDashboard() {
     }, []);
 
     useEffect(() => { fetchData(); }, [fetchData]);
+
+    const handleUpdateStatus = async (deliveryId, newStatus) => {
+        setUpdatingStatus(true);
+        try {
+            await deliveryService.updateDeliveryStatus(deliveryId, newStatus);
+            toast.success(`Delivery status updated to ${newStatus.replace(/_/g, " ")}`);
+            await fetchData();
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Failed to update delivery status");
+        } finally {
+            setUpdatingStatus(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -413,13 +430,58 @@ function DriverDashboard() {
                                         <p className="text-xs">{currentDelivery.deliveryAddress}</p>
                                     </div>
                                 </div>
-                                <div className="flex gap-2 pt-2">
-                                    <Button variant="primary" size="sm" onClick={() => navigate("/deliveries")}>
+                                <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-100">
+                                    {currentDelivery.status === "ASSIGNED" && (
+                                        <Button
+                                            variant="success"
+                                            size="sm"
+                                            loading={updatingStatus}
+                                            onClick={() => handleUpdateStatus(currentDelivery._id, "PICKED_UP")}
+                                        >
+                                            <PackageCheck className="w-4 h-4 mr-1" /> Mark Picked Up
+                                        </Button>
+                                    )}
+                                    {currentDelivery.status === "PICKED_UP" && (
+                                        <Button
+                                            variant="primary"
+                                            size="sm"
+                                            loading={updatingStatus}
+                                            onClick={() => handleUpdateStatus(currentDelivery._id, "IN_TRANSIT")}
+                                        >
+                                            <Truck className="w-4 h-4 mr-1" /> Start Transit
+                                        </Button>
+                                    )}
+                                    {currentDelivery.status === "IN_TRANSIT" && (
+                                        <Button
+                                            variant="primary"
+                                            size="sm"
+                                            loading={updatingStatus}
+                                            onClick={() => handleUpdateStatus(currentDelivery._id, "OUT_FOR_DELIVERY")}
+                                        >
+                                            <MapPin className="w-4 h-4 mr-1" /> Out for Delivery
+                                        </Button>
+                                    )}
+                                    {currentDelivery.status === "OUT_FOR_DELIVERY" && (
+                                        <Button
+                                            variant="success"
+                                            size="sm"
+                                            onClick={() => navigate("/proof-of-delivery", { state: { delivery: currentDelivery } })}
+                                        >
+                                            <CheckCircle className="w-4 h-4 mr-1" /> Submit POD
+                                        </Button>
+                                    )}
+                                    <Button variant="secondary" size="sm" onClick={() => navigate("/deliveries")}>
                                         View Details
                                     </Button>
-                                    <Button variant="secondary" size="sm" onClick={() => navigate("/proof-of-delivery")}>
-                                        Submit POD
-                                    </Button>
+                                    {currentDelivery.status !== "OUT_FOR_DELIVERY" && (
+                                        <Button
+                                            variant="secondary"
+                                            size="sm"
+                                            onClick={() => navigate("/proof-of-delivery", { state: { delivery: currentDelivery } })}
+                                        >
+                                            Submit POD
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
                         ) : (

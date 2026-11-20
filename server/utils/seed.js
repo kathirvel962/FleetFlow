@@ -25,7 +25,7 @@ const seedDatabase = async () => {
         ]);
 
         console.log("Creating default password hashes...");
-        const defaultPassword = "Password@123";
+        const defaultPassword = "12345678";
         const hashedPassword = await bcrypt.hash(defaultPassword, 10);
 
         console.log("Seeding Users...");
@@ -49,14 +49,29 @@ const seedDatabase = async () => {
             isActive: true
         });
 
+        // 3. DRIVER 1
+        const driverUser1 = await User.create({
+            name: "David Driver",
+            email: "driver1@fleetflow.com",
+            password: hashedPassword,
+            role: "DRIVER",
+            phone: "+1-555-0102",
+            isActive: true
+        });
 
+        // 4. DRIVER 2
+        const driverUser2 = await User.create({
+            name: "Danielle Driver",
+            email: "driver2@fleetflow.com",
+            password: hashedPassword,
+            role: "DRIVER",
+            phone: "+1-555-0103",
+            isActive: true
+        });
 
-
-
-
-
+        console.log("Seeding Vehicles...");
         // Vehicle 1
-        const defaultfuel = "DIESL";
+        const defaultfuel = "DIESEL";
         const vehicle1 = await Vehicle.create({
             vehicleNumber: "VAN-101",
             registrationNumber: "FL-VAN-2024-01",

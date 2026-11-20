@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { PlusCircle, Edit2, Trash2, MapPin, Package } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { PlusCircle, Edit2, Trash2, MapPin, Package, CheckCircle } from "lucide-react";
 import { deliveryService } from "../services/deliveryService";
 import { useToast } from "../context/ToastContext";
 import { useAuth } from "../context/AuthContext";
@@ -82,7 +83,7 @@ function DeliveryForm({ initial, onSubmit, onClose, loading }) {
     );
 }
 
-function DeliveryDetailModal({ delivery, onClose }) {
+function DeliveryDetailModal({ delivery, onClose, onStatusUpdate, updatingStatus, onNavigateToPod }) {
     if (!delivery) return null;
     return (
         <Modal open={!!delivery} onClose={onClose} title={`Delivery — ${delivery.deliveryNumber}`} maxWidth="max-w-2xl">
@@ -154,6 +155,52 @@ function DeliveryDetailModal({ delivery, onClose }) {
                     </div>
                 )}
 
+                {/* Quick Status Actions */}
+                {!["DELIVERED", "FAILED", "CANCELLED"].includes(delivery.status) && onStatusUpdate && (
+                    <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-100">
+                        <span className="text-xs font-semibold text-slate-400 uppercase mr-1">Actions:</span>
+                        {delivery.status === "ASSIGNED" && (
+                            <Button
+                                size="sm"
+                                variant="success"
+                                loading={updatingStatus}
+                                onClick={() => onStatusUpdate(delivery._id, "PICKED_UP")}
+                            >
+                                Mark as Picked Up
+                            </Button>
+                        )}
+                        {delivery.status === "PICKED_UP" && (
+                            <Button
+                                size="sm"
+                                variant="primary"
+                                loading={updatingStatus}
+                                onClick={() => onStatusUpdate(delivery._id, "IN_TRANSIT")}
+                            >
+                                Start Transit
+                            </Button>
+                        )}
+                        {delivery.status === "IN_TRANSIT" && (
+                            <Button
+                                size="sm"
+                                variant="primary"
+                                loading={updatingStatus}
+                                onClick={() => onStatusUpdate(delivery._id, "OUT_FOR_DELIVERY")}
+                            >
+                                Out for Delivery
+                            </Button>
+                        )}
+                        {onNavigateToPod && (
+                            <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={() => onNavigateToPod(delivery)}
+                            >
+                                Submit POD
+                            </Button>
+                        )}
+                    </div>
+                )}
+
                 <div className="flex items-center justify-between text-xs text-slate-400 border-t border-slate-100 pt-3">
                     <span>Created: {formatDateTime(delivery.createdAt)}</span>
                     <span>Updated: {formatDateTime(delivery.updatedAt)}</span>
@@ -178,6 +225,23 @@ function Deliveries() {
     const [confirm, setConfirm] = useState({ open: false, delivery: null });
     const toast = useToast();
     const { hasRole } = useAuth();
+    const navigate = useNavigate();
+
+    const handleStatusUpdate = async (deliveryId, newStatus) => {
+        setSubmitting(true);
+        try {
+            await deliveryService.updateDeliveryStatus(deliveryId, newStatus);
+            toast.success(`Delivery status updated to ${newStatus.replace(/_/g, " ")}`);
+            if (viewDelivery && viewDelivery._id === deliveryId) {
+                setViewDelivery(prev => prev ? { ...prev, status: newStatus } : null);
+            }
+            fetchDeliveries();
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Failed to update delivery status");
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     const fetchDeliveries = useCallback(async () => {
         setLoading(true);
@@ -316,6 +380,46 @@ function Deliveries() {
                                                             <Trash2 className="w-4 h-4" />
                                                         </button>
                                                     )}
+                                                    {hasRole("DRIVER") && d.status === "ASSIGNED" && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="success"
+                                                            className="text-xs px-2.5 py-1 h-7"
+                                                            onClick={() => handleStatusUpdate(d._id, "PICKED_UP")}
+                                                        >
+                                                            Pick Up
+                                                        </Button>
+                                                    )}
+                                                    {hasRole("DRIVER") && d.status === "PICKED_UP" && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="primary"
+                                                            className="text-xs px-2.5 py-1 h-7"
+                                                            onClick={() => handleStatusUpdate(d._id, "IN_TRANSIT")}
+                                                        >
+                                                            Start Transit
+                                                        </Button>
+                                                    )}
+                                                    {hasRole("DRIVER") && d.status === "IN_TRANSIT" && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="primary"
+                                                            className="text-xs px-2.5 py-1 h-7"
+                                                            onClick={() => handleStatusUpdate(d._id, "OUT_FOR_DELIVERY")}
+                                                        >
+                                                            Out for Del.
+                                                        </Button>
+                                                    )}
+                                                    {hasRole("DRIVER") && d.status === "OUT_FOR_DELIVERY" && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="success"
+                                                            className="text-xs px-2.5 py-1 h-7"
+                                                            onClick={() => navigate("/proof-of-delivery", { state: { delivery: d } })}
+                                                        >
+                                                            Submit POD
+                                                        </Button>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
@@ -343,7 +447,16 @@ function Deliveries() {
             </Modal>
 
             {/* Detail view */}
-            <DeliveryDetailModal delivery={viewDelivery} onClose={() => setViewDelivery(null)} />
+            <DeliveryDetailModal
+                delivery={viewDelivery}
+                onClose={() => setViewDelivery(null)}
+                onStatusUpdate={handleStatusUpdate}
+                updatingStatus={submitting}
+                onNavigateToPod={(d) => {
+                    setViewDelivery(null);
+                    navigate("/proof-of-delivery", { state: { delivery: d } });
+                }}
+            />
 
             {/* Delete confirm */}
             <ConfirmDialog

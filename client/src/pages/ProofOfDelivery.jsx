@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useLocation } from "react-router-dom";
 import { ClipboardCheck, Camera, FileText } from "lucide-react";
 import { deliveryService } from "../services/deliveryService";
 import { useToast } from "../context/ToastContext";
@@ -61,9 +62,10 @@ function PodForm({ delivery, onSubmit, loading }) {
 }
 
 function ProofOfDelivery() {
+    const location = useLocation();
     const [deliveries, setDeliveries] = useState([]);
     const [completedDeliveries, setCompletedDeliveries] = useState([]);
-    const [selectedDelivery, setSelectedDelivery] = useState(null);
+    const [selectedDelivery, setSelectedDelivery] = useState(location.state?.delivery || null);
     const [loading, setLoading] = useState(true);
     const [completedLoading, setCompletedLoading] = useState(true);
     const [error, setError] = useState("");
@@ -71,22 +73,36 @@ function ProofOfDelivery() {
     const { hasRole } = useAuth();
     const toast = useToast();
 
+    useEffect(() => {
+        if (location.state?.delivery) {
+            setSelectedDelivery(location.state.delivery);
+        }
+    }, [location.state]);
+
     const fetchDeliveries = useCallback(async () => {
         setLoading(true);
         try {
-            // Fetch deliveries that need POD (OUT_FOR_DELIVERY or IN_TRANSIT)
-            const [transitRes, outRes] = await Promise.all([
+            // Fetch deliveries that can accept POD
+            const [transitRes, outRes, pickedRes] = await Promise.all([
                 deliveryService.getDeliveries({ status: "IN_TRANSIT", limit: 50 }),
                 deliveryService.getDeliveries({ status: "OUT_FOR_DELIVERY", limit: 50 }),
+                deliveryService.getDeliveries({ status: "PICKED_UP", limit: 50 }),
             ]);
-            const combined = [...(transitRes.data.data || []), ...(outRes.data.data || [])];
+            let combined = [
+                ...(outRes.data.data || []),
+                ...(transitRes.data.data || []),
+                ...(pickedRes.data.data || [])
+            ];
+            if (location.state?.delivery && !combined.some(d => d._id === location.state.delivery._id)) {
+                combined = [location.state.delivery, ...combined];
+            }
             setDeliveries(combined);
         } catch (err) {
             setError(err.response?.data?.message || "Failed to load deliveries");
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [location.state]);
 
     const fetchCompleted = useCallback(async () => {
         setCompletedLoading(true);
