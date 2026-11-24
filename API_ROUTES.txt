@@ -1,0 +1,40 @@
+GET    /                               - Health check endpoint to verify that the API server is running.
+POST   /api/auth/register              - Register a new user account with role and credentials.
+POST   /api/auth/login                 - Authenticate user credentials and return a JWT access token.
+GET    /api/auth/me                    - Retrieve profile information of the currently authenticated user.
+GET    /api/users                      - Get a paginated list of all system users (Admin only).
+POST   /api/users                      - Create a new user with a specified role (Admin only).
+GET    /api/users/:id                  - Get details of a specific user by ID (Admin only).
+PUT    /api/users/:id                  - Update user details such as name, email, role, or phone (Admin only).
+DELETE /api/users/:id                  - Delete a user account from the system (Admin only).
+PATCH  /api/users/:id/status           - Toggle user active or inactive status (Admin only).
+GET    /api/vehicles                   - Get a paginated list of all fleet vehicles.
+POST   /api/vehicles                   - Register a new vehicle to the fleet (Admin only).
+GET    /api/vehicles/:id               - Get specifications and current status of a vehicle by ID.
+PUT    /api/vehicles/:id               - Update vehicle specifications, capacity, or details (Admin only).
+DELETE /api/vehicles/:id               - Remove a vehicle from the fleet registry (Admin only).
+PATCH  /api/vehicles/:id/status        - Update vehicle operational status (Admin and Dispatcher).
+GET    /api/drivers                    - List all driver profiles or view own profile for drivers.
+POST   /api/drivers                    - Create a new driver profile linked to a user account (Admin only).
+GET    /api/drivers/:id                - Get driver profile details by driver ID or user ID.
+PUT    /api/drivers/:id                - Update driver profile, license, address, or emergency contact.
+PATCH  /api/drivers/:id/status         - Update driver availability status (Available, On Trip, Off Duty, Suspended).
+PATCH  /api/drivers/:id/vehicle        - Assign or unassign a fleet vehicle to a driver (Admin and Dispatcher).
+GET    /api/deliveries                 - List deliveries with filtering, search, and driver-scoped visibility.
+POST   /api/deliveries                 - Create a new delivery order with customer and package details.
+GET    /api/deliveries/:id             - Get full details of a specific delivery order by ID.
+PUT    /api/deliveries/:id             - Update delivery customer info, addresses, weight, or schedule.
+DELETE /api/deliveries/:id             - Delete a delivery order and its proof of delivery (Admin only).
+PATCH  /api/deliveries/:id/status      - Update delivery progress status (Picked Up, In Transit, Out for Delivery, Failed).
+POST   /api/deliveries/:id/proof       - Submit Proof of Delivery (POD) to mark as Delivered and release assets.
+POST   /api/dispatch/assign            - Assign delivery to driver and vehicle, or trigger automated dispatch.
+GET    /api/dispatch/active            - Retrieve all currently active dispatches and on-trip units.
+GET    /api/dispatch/history           - Retrieve historical dispatch assignments and completion logs.
+GET    /api/driver/dashboard           - Get driver shift overview, metrics, assigned vehicle, and active delivery.
+GET    /api/driver/deliveries          - Get all deliveries assigned to the logged-in driver.
+GET    /api/driver/deliveries/:id      - Get details of a specific delivery assigned to the logged-in driver.
+PATCH  /api/driver/deliveries/:id/status - Update the status of an assigned delivery as a driver.
+POST   /api/driver/deliveries/:id/proof  - Submit Proof of Delivery for an assigned delivery as a driver.
+GET    /api/dashboard/admin            - Retrieve executive analytics, fleet utilization, and performance metrics (Admin only).
+GET    /api/dashboard/dispatcher       - Retrieve dispatch operational metrics, asset counts, and queues (Dispatcher/Admin).
+GET    /api/dashboard/driver           - Retrieve daily summary, schedule, and current task for the driver dashboard.

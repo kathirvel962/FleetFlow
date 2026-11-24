@@ -148,64 +148,83 @@ function DeliveryDetailModal({ delivery, onClose, onStatusUpdate, updatingStatus
                     </div>
                 )}
 
-                {delivery.proofOfDelivery?.isSubmitted && (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                        <p className="text-xs font-semibold text-green-700 mb-1">✓ Proof of Delivery Submitted</p>
-                        <p className="text-xs text-green-600">at {formatDateTime(delivery.proofOfDelivery?.deliveredAt)}</p>
-                    </div>
-                )}
+                        {delivery.proofOfDelivery && (
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-3 space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-xs font-semibold text-green-700">✓ Proof of Delivery Submitted</p>
+                                    {delivery.proofOfDelivery.deliveredAt && (
+                                        <p className="text-xs text-green-600">at {formatDateTime(delivery.proofOfDelivery.deliveredAt)}</p>
+                                    )}
+                                </div>
+                                {delivery.proofOfDelivery.recipientName && (
+                                    <p className="text-xs text-slate-700">
+                                        Received by: <span className="font-semibold text-slate-800">{delivery.proofOfDelivery.recipientName}</span>
+                                    </p>
+                                )}
+                                {delivery.proofOfDelivery.photo && (
+                                    <div className="pt-2 border-t border-green-200/70">
+                                        <p className="text-xs font-medium text-slate-600 mb-1">Package Photo Proof:</p>
+                                        <img
+                                            src={delivery.proofOfDelivery.photo}
+                                            alt="Proof of Delivery"
+                                            className="max-h-56 w-auto rounded-lg border border-green-300 object-contain bg-black/5 shadow-sm"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
-                {/* Quick Status Actions */}
-                {!["DELIVERED", "FAILED", "CANCELLED"].includes(delivery.status) && onStatusUpdate && (
-                    <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-100">
-                        <span className="text-xs font-semibold text-slate-400 uppercase mr-1">Actions:</span>
-                        {delivery.status === "ASSIGNED" && (
-                            <Button
-                                size="sm"
-                                variant="success"
-                                loading={updatingStatus}
-                                onClick={() => onStatusUpdate(delivery._id, "PICKED_UP")}
-                            >
-                                Mark as Picked Up
-                            </Button>
+                        {/* Quick Status Actions */}
+                        {!["DELIVERED", "FAILED", "CANCELLED"].includes(delivery.status) && onStatusUpdate && (
+                            <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-100">
+                                <span className="text-xs font-semibold text-slate-400 uppercase mr-1">Actions:</span>
+                                {delivery.status === "ASSIGNED" && (
+                                    <Button
+                                        size="sm"
+                                        variant="success"
+                                        loading={updatingStatus}
+                                        onClick={() => onStatusUpdate(delivery._id, "PICKED_UP")}
+                                    >
+                                        Mark as Picked Up
+                                    </Button>
+                                )}
+                                {delivery.status === "PICKED_UP" && (
+                                    <Button
+                                        size="sm"
+                                        variant="primary"
+                                        loading={updatingStatus}
+                                        onClick={() => onStatusUpdate(delivery._id, "IN_TRANSIT")}
+                                    >
+                                        Start Transit
+                                    </Button>
+                                )}
+                                {delivery.status === "IN_TRANSIT" && (
+                                    <Button
+                                        size="sm"
+                                        variant="primary"
+                                        loading={updatingStatus}
+                                        onClick={() => onStatusUpdate(delivery._id, "OUT_FOR_DELIVERY")}
+                                    >
+                                        Out for Delivery
+                                    </Button>
+                                )}
+                                {onNavigateToPod && (
+                                    <Button
+                                        size="sm"
+                                        variant="secondary"
+                                        onClick={() => onNavigateToPod(delivery)}
+                                    >
+                                        Submit POD
+                                    </Button>
+                                )}
+                            </div>
                         )}
-                        {delivery.status === "PICKED_UP" && (
-                            <Button
-                                size="sm"
-                                variant="primary"
-                                loading={updatingStatus}
-                                onClick={() => onStatusUpdate(delivery._id, "IN_TRANSIT")}
-                            >
-                                Start Transit
-                            </Button>
-                        )}
-                        {delivery.status === "IN_TRANSIT" && (
-                            <Button
-                                size="sm"
-                                variant="primary"
-                                loading={updatingStatus}
-                                onClick={() => onStatusUpdate(delivery._id, "OUT_FOR_DELIVERY")}
-                            >
-                                Out for Delivery
-                            </Button>
-                        )}
-                        {onNavigateToPod && (
-                            <Button
-                                size="sm"
-                                variant="secondary"
-                                onClick={() => onNavigateToPod(delivery)}
-                            >
-                                Submit POD
-                            </Button>
-                        )}
-                    </div>
-                )}
 
-                <div className="flex items-center justify-between text-xs text-slate-400 border-t border-slate-100 pt-3">
-                    <span>Created: {formatDateTime(delivery.createdAt)}</span>
-                    <span>Updated: {formatDateTime(delivery.updatedAt)}</span>
-                </div>
-            </div>
+                        <div className="flex items-center justify-between text-xs text-slate-400 border-t border-slate-100 pt-3">
+                            <span>Created: {formatDateTime(delivery.createdAt)}</span>
+                            <span>Updated: {formatDateTime(delivery.updatedAt)}</span>
+                        </div>
+                    </div>
         </Modal>
     );
 }
