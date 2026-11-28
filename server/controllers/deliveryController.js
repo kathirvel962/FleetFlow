@@ -108,6 +108,7 @@ const createDelivery = async (req, res, next) => {
             deliveryCoordinates,
             packageDescription,
             packageWeight,
+            weight,
             priority,
             scheduledDate,
             notes
@@ -133,6 +134,8 @@ const createDelivery = async (req, res, next) => {
             ? priority.toUpperCase()
             : "MEDIUM";
 
+        const resolvedWeight = packageWeight !== undefined ? packageWeight : (weight !== undefined ? weight : 1);
+
         const delivery = await Delivery.create({
             deliveryNumber: delNum,
             customerName: customerName.trim(),
@@ -142,7 +145,7 @@ const createDelivery = async (req, res, next) => {
             pickupCoordinates: pickupCoordinates || { lat: 0, lng: 0 },
             deliveryCoordinates: deliveryCoordinates || { lat: 0, lng: 0 },
             packageDescription: packageDescription || "",
-            packageWeight: packageWeight || 1,
+            packageWeight: resolvedWeight,
             priority: delPriority,
             scheduledDate: scheduledDate || new Date(),
             status: "PENDING",
@@ -199,6 +202,7 @@ const updateDelivery = async (req, res, next) => {
             deliveryCoordinates,
             packageDescription,
             packageWeight,
+            weight,
             priority,
             scheduledDate,
             notes
@@ -211,7 +215,8 @@ const updateDelivery = async (req, res, next) => {
         if (pickupCoordinates) delivery.pickupCoordinates = pickupCoordinates;
         if (deliveryCoordinates) delivery.deliveryCoordinates = deliveryCoordinates;
         if (packageDescription !== undefined) delivery.packageDescription = packageDescription.trim();
-        if (packageWeight !== undefined) delivery.packageWeight = packageWeight;
+        const resolvedWeight = packageWeight !== undefined ? packageWeight : weight;
+        if (resolvedWeight !== undefined) delivery.packageWeight = resolvedWeight;
         if (priority) {
             const valid = ["LOW", "MEDIUM", "HIGH", "URGENT"];
             if (valid.includes(priority.toUpperCase())) {

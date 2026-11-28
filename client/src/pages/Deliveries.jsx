@@ -24,7 +24,7 @@ function DeliveryForm({ initial, onSubmit, onClose, loading }) {
         priority: initial?.priority || "MEDIUM",
         scheduledDate: initial?.scheduledDate ? initial.scheduledDate.split("T")[0] : "",
         notes: initial?.notes || "",
-        weight: initial?.weight || "",
+        weight: initial?.packageWeight !== undefined ? initial.packageWeight : (initial?.weight || ""),
         packageDescription: initial?.packageDescription || "",
         status: initial?.status || "PENDING",
     });
@@ -34,7 +34,9 @@ function DeliveryForm({ initial, onSubmit, onClose, loading }) {
     const handleSubmit = (e) => {
         e.preventDefault();
         const payload = { ...form };
-        if (!payload.weight) delete payload.weight;
+        if (payload.weight !== undefined && payload.weight !== "") {
+            payload.packageWeight = Number(payload.weight);
+        }
         if (!payload.scheduledDate) delete payload.scheduledDate;
         onSubmit(payload);
     };
@@ -126,16 +128,16 @@ function DeliveryDetailModal({ delivery, onClose, onStatusUpdate, updatingStatus
                             <p className="text-xs text-slate-400 font-semibold uppercase">Schedule</p>
                             <p className="text-slate-700">{formatDate(delivery.scheduledDate)}</p>
                         </div>
-                        {delivery.weight && (
+                        {(delivery.packageWeight !== undefined || delivery.weight !== undefined) && (
                             <div>
-                                <p className="text-xs text-slate-400 font-semibold uppercase">Weight</p>
-                                <p className="text-slate-700">{delivery.weight} kg</p>
+                                <p className="text-xs text-slate-400 font-semibold uppercase">Cargo Load / Weight</p>
+                                <p className="text-slate-700 font-semibold">{delivery.packageWeight ?? delivery.weight} kg</p>
                             </div>
                         )}
                         {delivery.packageDescription && (
                             <div>
-                                <p className="text-xs text-slate-400 font-semibold uppercase">Package</p>
-                                <p className="text-slate-700">{delivery.packageDescription}</p>
+                                <p className="text-xs text-slate-400 font-semibold uppercase">Cargo Description</p>
+                                <p className="text-slate-700 font-medium">{delivery.packageDescription}</p>
                             </div>
                         )}
                     </div>

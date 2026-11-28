@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Users, Truck, Car, Package, Clock, CheckCircle, XCircle, AlertTriangle,
-    RefreshCw, TrendingUp, MapPin, Zap, Send, PackageCheck
+    RefreshCw, TrendingUp, MapPin, Zap, Send, PackageCheck, Scale, Boxes, AlertCircle
 } from "lucide-react";
 import {
     PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend
@@ -417,7 +417,12 @@ function DriverDashboard() {
                                     <span className="font-mono text-sm font-bold text-blue-700 bg-blue-50 px-3 py-1 rounded-full">
                                         {currentDelivery.deliveryNumber}
                                     </span>
-                                    <StatusBadge status={currentDelivery.status} />
+                                    <div className="flex items-center gap-2">
+                                        {currentDelivery.priority && (
+                                            <PriorityBadge priority={currentDelivery.priority} />
+                                        )}
+                                        <StatusBadge status={currentDelivery.status} />
+                                    </div>
                                 </div>
                                 <div className="space-y-2 text-sm">
                                     <p className="font-semibold text-slate-800">{currentDelivery.customerName}</p>
@@ -429,6 +434,66 @@ function DriverDashboard() {
                                         <MapPin className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
                                         <p className="text-xs">{currentDelivery.deliveryAddress}</p>
                                     </div>
+                                </div>
+
+                                {/* Cargo / Load Information */}
+                                <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 space-y-2.5">
+                                    <div className="flex items-center justify-between text-xs text-slate-500 font-semibold uppercase tracking-wider">
+                                        <span className="flex items-center gap-1.5 text-slate-700">
+                                            <Package className="w-3.5 h-3.5 text-blue-600" />
+                                            Cargo & Load Details
+                                        </span>
+                                        {(currentDelivery.packageWeight !== undefined || currentDelivery.weight !== undefined) && (
+                                            <span className="text-blue-700 bg-blue-100 font-mono px-2 py-0.5 rounded text-[11px] font-bold">
+                                                {currentDelivery.packageWeight ?? currentDelivery.weight} kg
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-2 text-xs">
+                                        <div className="bg-white p-2.5 rounded-lg border border-slate-200 space-y-1">
+                                            <div className="flex items-center gap-1.5 text-slate-500">
+                                                <Scale className="w-3.5 h-3.5 text-indigo-500" />
+                                                <span className="font-medium">Cargo Weight</span>
+                                            </div>
+                                            <p className="font-bold text-slate-800 text-sm">
+                                                {currentDelivery.packageWeight ?? currentDelivery.weight ?? "1"} kg
+                                            </p>
+                                            {assignedVehicle?.capacity && (
+                                                <div className="pt-0.5">
+                                                    <div className="flex justify-between text-[10px] text-slate-400 mb-0.5">
+                                                        <span>Vehicle capacity</span>
+                                                        <span>{assignedVehicle.capacity} kg</span>
+                                                    </div>
+                                                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                        <div
+                                                            className="h-full bg-emerald-500"
+                                                            style={{
+                                                                width: `${Math.min(100, Math.max(5, Math.round(((currentDelivery.packageWeight ?? currentDelivery.weight ?? 1) / assignedVehicle.capacity) * 100)))}%`
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="bg-white p-2.5 rounded-lg border border-slate-200 space-y-1">
+                                            <div className="flex items-center gap-1.5 text-slate-500">
+                                                <Boxes className="w-3.5 h-3.5 text-amber-500" />
+                                                <span className="font-medium">Package Content</span>
+                                            </div>
+                                            <p className="font-semibold text-slate-800 text-xs line-clamp-2" title={currentDelivery.packageDescription || "Standard delivery items"}>
+                                                {currentDelivery.packageDescription || "Standard delivery items"}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {currentDelivery.notes && (
+                                        <div className="bg-amber-50 border border-amber-200/80 rounded-lg p-2 text-xs text-amber-900 flex items-start gap-1.5">
+                                            <AlertCircle className="w-3.5 h-3.5 text-amber-600 mt-0.5 shrink-0" />
+                                            <p><span className="font-semibold">Handling Note:</span> {currentDelivery.notes}</p>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-100">
                                     {currentDelivery.status === "ASSIGNED" && (

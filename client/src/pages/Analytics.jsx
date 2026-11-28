@@ -231,11 +231,10 @@ export default function Analytics() {
                                 <button
                                     key={range}
                                     onClick={() => setTimeRange(range)}
-                                    className={`px-3 py-1.5 rounded-md transition-colors ${
-                                        timeRange === range
+                                    className={`px-3 py-1.5 rounded-md transition-colors ${timeRange === range
                                             ? "bg-blue-600 text-white font-semibold shadow-xs"
                                             : "hover:text-slate-900"
-                                    }`}
+                                        }`}
                                 >
                                     {range === "7d" ? "7 Days" : range === "30d" ? "30 Days" : "Quarter"}
                                 </button>
@@ -346,11 +345,10 @@ export default function Analytics() {
                         <div
                             className="bg-purple-600 h-1.5 rounded-full transition-all duration-500"
                             style={{
-                                width: `${
-                                    stats.totalDrivers > 0
+                                width: `${stats.totalDrivers > 0
                                         ? (stats.activeDrivers / stats.totalDrivers) * 100
                                         : 0
-                                }%`,
+                                    }%`,
                             }}
                         />
                     </div>
@@ -380,11 +378,10 @@ export default function Analytics() {
                         <div
                             className="bg-amber-500 h-1.5 rounded-full transition-all duration-500"
                             style={{
-                                width: `${
-                                    stats.totalDeliveries > 0
+                                width: `${stats.totalDeliveries > 0
                                         ? (stats.inTransitDeliveries / stats.totalDeliveries) * 100
                                         : 0
-                                }%`,
+                                    }%`,
                             }}
                         />
                     </div>
